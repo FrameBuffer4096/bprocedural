@@ -1,6 +1,7 @@
 <template>
   <div class="scene-container">
-    <canvas ref="canvasRef"></canvas>
+    <!-- Full-screen canvas that never changes size -->
+    <canvas ref="canvasRef" class="scene-canvas"></canvas>
     
     <!-- Success Toast Notification -->
     <v-snackbar
@@ -20,8 +21,8 @@
       v-model="isPanelOpen"
       location="left"
       width="300"
-      floating
-      class="rounded-lg elevation-5"
+      temporary
+      class="rounded-lg drawer-overlay elevation-5"
       theme="dark"
     >
       <template v-slot:prepend>
@@ -162,7 +163,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, reactive, watch } from 'vue';
+import { defineComponent, ref, onMounted, reactive, watch, onBeforeUnmount } from 'vue';
 import { ProceduralScene } from '@/babylon/scenes/proceduralScene';
 
 export default defineComponent({
@@ -199,6 +200,13 @@ export default defineComponent({
       }
     });
     
+    // Handle window resize events
+    const handleResize = () => {
+      if (sceneInstance.value && sceneInstance.value.engine) {
+        sceneInstance.value.engine.resize();
+      }
+    };
+    
     const updateGrid = async () => {
       if (!sceneInstance.value) return;
       
@@ -219,6 +227,19 @@ export default defineComponent({
     onMounted(() => {
       if (canvasRef.value) {
         sceneInstance.value = new ProceduralScene(canvasRef.value);
+        
+        // Add resize event listener
+        window.addEventListener('resize', handleResize);
+      }
+    });
+    
+    onBeforeUnmount(() => {
+      // Remove resize event listener to prevent memory leaks
+      window.removeEventListener('resize', handleResize);
+      
+      // Clean up the Babylon scene if necessary
+      if (sceneInstance.value) {
+        sceneInstance.value.engine.dispose();
       }
     });
     
@@ -240,14 +261,24 @@ export default defineComponent({
 .scene-container {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   overflow: hidden;
 }
 
-canvas {
+.scene-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   display: block;
+  touch-action: none;
+  z-index: 1;
+}
+
+/* Make drawer appear on top of canvas */
+.drawer-overlay {
+  z-index: 10;
 }
 
 .toggle-btn {
