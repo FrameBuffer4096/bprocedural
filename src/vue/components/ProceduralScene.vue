@@ -2,6 +2,19 @@
   <div class="scene-container">
     <canvas ref="canvasRef"></canvas>
     
+    <!-- Success Toast Notification -->
+    <v-snackbar
+      v-model="showSuccessToast"
+      color="success"
+      timeout="3000"
+      location="top center"
+    >
+      <div class="d-flex align-center">
+        <v-icon class="mr-2">mdi-check-circle</v-icon>
+        Grid updated successfully!
+      </div>
+    </v-snackbar>
+    
     <!-- Side Panel with integrated toggle button -->
     <v-navigation-drawer
       v-model="isPanelOpen"
@@ -22,17 +35,6 @@
       
       <v-card class="ma-3 pa-3 rounded-lg" theme="dark">
         <v-card-text>
-          <v-alert
-            v-if="configSuccess"
-            color="success"
-            icon="mdi-check-circle"
-            variant="tonal"
-            class="mb-4"
-            density="compact"
-          >
-            Grid updated successfully!
-          </v-alert>
-          
           <!-- X Count with numeric display -->
           <div class="d-flex align-center mb-3">
             <div class="font-weight-medium width-30">X Count:</div>
@@ -170,6 +172,7 @@ export default defineComponent({
     const isPanelOpen = ref(false);
     const isLoading = ref(false);
     const configSuccess = ref(false);
+    const showSuccessToast = ref(false);
     const selectedPreset = ref('medium');
     const sceneInstance = ref<ProceduralScene | null>(null);
     
@@ -204,11 +207,8 @@ export default defineComponent({
       try {
         await sceneInstance.value.updateGrid(gridConfig.xCount, gridConfig.zCount);
         
-        // Show success message
-        configSuccess.value = true;
-        setTimeout(() => {
-          configSuccess.value = false;
-        }, 3000);
+        // Show success toast instead of in-panel alert
+        showSuccessToast.value = true;
       } catch (error) {
         console.error('Failed to update grid:', error);
       } finally {
@@ -228,6 +228,7 @@ export default defineComponent({
       gridConfig,
       isLoading,
       configSuccess,
+      showSuccessToast,
       selectedPreset,
       updateGrid
     };
